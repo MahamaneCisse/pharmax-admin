@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { account } from "@/lib/appwrite";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import logo from "@/public/img/pharmax.png";
+import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -22,11 +25,20 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div>
+        <Image
+          src={logo}
+          alt="Pharmax Logo"
+          width={200}
+          height={200}
+          className="mb-8"
+        />
+      </div>
       <button
         onClick={handleLogin}
-        className="bg-blue-600 text-white p-2 rounded"
+        className="bg-gray-900 text-white py-2 px-4 rounded flex items-center justify-center gap-2 hover:bg-gr transition-colors duration-300"
       >
-        Se connecter avec google
+        Se connecter avec Google <FcGoogle />
       </button>
     </main>
   );
