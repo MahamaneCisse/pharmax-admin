@@ -40,6 +40,7 @@ export default function LoginPage() {
       >
         Se connecter avec Google <FcGoogle />
       </button>
+      <p>Pour accéder à votre compte</p>
     </main>
   );
 }

@@ -1,8 +1,27 @@
+"use client";
 import Link from "next/link";
 import Image from "next/image";
 import { FaArrowRight } from "react-icons/fa6";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { account } from "@/lib/appwrite";
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const user = await account.get();
+        setUser(user);
+        router.push("/dashboard");
+      } catch {
+        router.push("/login");
+      }
+    };
+    getUser();
+  }, []);
   return (
     <div className="w-screen max-w-7xl h-screen flex items-center justify-center mx-auto flex-col gap-4 ">
       <div>

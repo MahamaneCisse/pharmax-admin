@@ -82,6 +82,11 @@ export default function DashboardPage() {
             </button>
           </Link>
         </div>
+        <Link href="/pharmacie/add">
+          <button className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 mb-2">
+            Ajouter votre pharmacie <IoMdAdd />
+          </button>
+        </Link>
         {/* medications table ref-price */}
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 bg-white shadow-md rounded-xl overflow-hidden">
@@ -100,10 +105,10 @@ export default function DashboardPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {[
-                { nom: "Paracétamol", prix: "5,00 €" },
-                { nom: "Ibuprofène", prix: "7,00 €" },
-                { nom: "Amoxicilline", prix: "10,00 €" },
-                { nom: "Oméprazole", prix: "8,00 €" },
+                { nom: "Paracétamol", prix: "100 Fcfa" },
+                { nom: "Ibuprofène", prix: "700 Fcfa" },
+                { nom: "Amoxicilline", prix: "1000 Fcfa" },
+                { nom: "Oméprazole", prix: "800 Fcfa" },
               ].map((medoc, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
