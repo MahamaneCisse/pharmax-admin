@@ -1,28 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { account } from "@/lib/appwrite";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import logo from "@/public/img/pharmax.png";
 import { FcGoogle } from "react-icons/fc";
+import { login } from "@/lib/appwrite";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const router = useRouter();
-
   const handleLogin = async () => {
-    try {
-      await account.createOAuth2Session(
-        "google",
-        `${window.location.origin}/dashboard`
-      );
-    } catch (err: any) {
-      alert("Erreur de connexion : " + err.message);
-    }
+    console.log("Tentative de connexion...");
+    await login();
+    console.log("Connexion réussie, redirection vers le tableau de bord...");
   };
-
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4">
       <div>

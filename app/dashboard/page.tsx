@@ -1,35 +1,75 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { account } from "@/lib/appwrite";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { IoMdNotifications } from "react-icons/io";
 import { IoMdAdd } from "react-icons/io";
 import { MdEdit } from "react-icons/md";
 import { GoTrash } from "react-icons/go";
 import Link from "next/link";
+import { account, getCurrentUser } from "@/lib/appwrite";
+import { createPharmacienIfNotExists } from "@/lib/appwrite";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const getUser = async () => {
-      try {
-        const user = await account.get();
-        setUser(user);
-      } catch {
-        router.push("/login");
+    const init = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        await createPharmacienIfNotExists();
       }
     };
-    getUser();
+
+    init();
+  }, []);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const data = await getCurrentUser();
+      setUser(data);
+      console.log("Utilisateur (depuis collection pharmaciens) :", data);
+    };
+
+    fetchUser();
   }, []);
 
   const handleLogout = async () => {
     await account.deleteSession("current");
+    // Redirect to login page after logout
     router.push("/login");
   };
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p>Chargement...</p>
+      </div>
+    );
+  }
+
+  console.log("User:", user);
+  console.log("User Pharmacie:", user.pharmacie);
+  const userPharmacie = user?.pharmacie;
+  if (!userPharmacie) {
+    return (
+      <div className="flex items-center justify-center h-screen flex-col">
+        <p>Vous n'avez pas encore ajouté votre pharmacie.</p>
+        <Link href="/pharmacie/add">
+          <button className="ml-4 bg-green-600 text-white px-4 py-2 rounded">
+            Ajouter votre pharmacie
+          </button>
+        </Link>
+        <button
+          onClick={handleLogout}
+          className="mt-4 bg-red-600 text-white px-4 py-2 rounded"
+        >
+          Se déconnecter
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -64,11 +104,13 @@ export default function DashboardPage() {
               />
             </div>
             <p className="text-white text-2xl"> {user?.name}</p>
+            <p className="text-white text-2xl"> {user?.email}</p>
           </div>
         </div>
       </header>
       <main className="w-full h-screen px-24">
         <h1 className="text-2xl font-bold mt-4">Bienvenue sur le Dashboard</h1>
+
         {/* searchbar and add medication button */}
         <div className="flex items-center justify-around mt-8 mb-4">
           <input
@@ -82,11 +124,6 @@ export default function DashboardPage() {
             </button>
           </Link>
         </div>
-        <Link href="/pharmacie/add">
-          <button className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 mb-2">
-            Ajouter votre pharmacie <IoMdAdd />
-          </button>
-        </Link>
         {/* medications table ref-price */}
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 bg-white shadow-md rounded-xl overflow-hidden">
