@@ -7,11 +7,17 @@ import { MdEdit } from "react-icons/md";
 import { GoTrash } from "react-icons/go";
 import Link from "next/link";
 import { account, getCurrentUser } from "@/lib/appwrite";
-import { createPharmacienIfNotExists } from "@/lib/appwrite";
+import {
+  createPharmacienIfNotExists,
+  getPharmacieByPharmacien,
+  getMedicamentsByPharmacie,
+} from "@/lib/appwrite";
 import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
+  const [pharmacie, setPharmacie] = useState<any>(null);
+  const [medicaments, setMedicaments] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,13 +32,22 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const data = await getCurrentUser();
-      setUser(data);
-      console.log("Utilisateur (depuis collection pharmaciens) :", data);
+    const fetchData = async () => {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+
+      if (currentUser?.$id) {
+        const pharmacieDoc = await getPharmacieByPharmacien(currentUser.$id);
+        setPharmacie(pharmacieDoc);
+
+        if (pharmacieDoc?.$id) {
+          const meds = await getMedicamentsByPharmacie(pharmacieDoc.$id);
+          setMedicaments(meds);
+        }
+      }
     };
 
-    fetchUser();
+    fetchData();
   }, []);
 
   const handleLogout = async () => {
@@ -51,7 +66,7 @@ export default function DashboardPage() {
 
   console.log("User:", user);
   console.log("User Pharmacie:", user.pharmacie);
-  const userPharmacie = user?.pharmacie;
+  const userPharmacie = pharmacie;
   if (!userPharmacie) {
     return (
       <div className="flex items-center justify-center h-screen flex-col">
@@ -104,13 +119,12 @@ export default function DashboardPage() {
               />
             </div>
             <p className="text-white text-2xl"> {user?.name}</p>
-            <p className="text-white text-2xl"> {user?.email}</p>
           </div>
         </div>
       </header>
       <main className="w-full h-screen px-24">
         <h1 className="text-2xl font-bold mt-4">Bienvenue sur le Dashboard</h1>
-
+        <p className="text-xl"> Pharmacie {userPharmacie?.name}</p>
         {/* searchbar and add medication button */}
         <div className="flex items-center justify-around mt-8 mb-4">
           <input
@@ -141,18 +155,13 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {[
-                { nom: "Paracétamol", prix: "100 Fcfa" },
-                { nom: "Ibuprofène", prix: "700 Fcfa" },
-                { nom: "Amoxicilline", prix: "1000 Fcfa" },
-                { nom: "Oméprazole", prix: "800 Fcfa" },
-              ].map((medoc, index) => (
+              {medicaments.map((medoc, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                    {medoc.nom}
+                    {medoc.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                    {medoc.prix}
+                    {medoc.prix} Fcfa
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <button className="text-blue-600 hover:text-blue-800 mr-4">

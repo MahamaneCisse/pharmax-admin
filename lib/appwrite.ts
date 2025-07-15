@@ -7,6 +7,10 @@ export const config = {
   databaseId: process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
   pharmaciensCollectionId:
     process.env.NEXT_PUBLIC_APPWRITE_PHARMACIENS_COLLECTIONS_ID!,
+  pharmaciesCollectionId:
+    process.env.NEXT_PUBLIC_APPWRITE_PHARMACIES_COLLECTIONS_ID!,
+  medicamentsCollectionId:
+    process.env.NEXT_PUBLIC_APPWRITE_MEDICAMENTS_COLLECTIONS_ID!,
 };
 
 const client = new Client();
@@ -81,33 +85,36 @@ export const getCurrentUser = async () => {
 
 export const createPharmacienIfNotExists = async () => {
   try {
-    const user = await getCurrentUser();
-    if (!user) throw new Error("Utilisateur non connecté");
+    const user = await account.get(); // récupère user connecté Appwrite
 
+    // 🔍 1. Vérifie si ce pharmacien existe déjà dans la base
     const existing = await databases.listDocuments(
       config.databaseId,
       config.pharmaciensCollectionId,
       [Query.equal("pharmaciensId", user.$id)]
     );
 
-    if (existing.documents.length === 0) {
-      await databases.createDocument(
-        config.databaseId,
-        config.pharmaciensCollectionId,
-        ID.unique(),
-        {
-          email: user.email,
-          name: user.name,
-          pharmaciensId: user.$id,
-        }
-      );
+    // ✅ S'il existe, on retourne simplement le document
+    if (existing.documents.length > 0) {
+      return existing.documents[0];
     }
-    console.log("Pharmacien enregistré ou déjà existant.");
 
-    return true;
+    // 🆕 Sinon, on le crée
+    const newPharmacien = await databases.createDocument(
+      config.databaseId,
+      config.pharmaciensCollectionId,
+      ID.unique(),
+      {
+        name: user.name,
+        email: user.email,
+        pharmaciensId: user.$id, // lien vers Appwrite user
+      }
+    );
+
+    return newPharmacien;
   } catch (error) {
     console.error("Erreur enregistrement pharmacien :", error);
-    return false;
+    return null;
   }
 };
 
@@ -115,4 +122,93 @@ export const handleLogout = async () => {
   await account.deleteSession("current");
   // Redirect to login page after logout
   router.push("/login");
+};
+
+export const createPharmacie = async (data: any) => {
+  try {
+    // 🔐 Obtenir le pharmacien connecté (créé si inexistant)
+    const pharmacien = await createPharmacienIfNotExists();
+    if (!pharmacien) throw new Error("Pharmacien introuvable");
+
+    // 🏥 Créer la pharmacie avec le lien vers le pharmacien
+    const response = await databases.createDocument(
+      config.databaseId,
+      config.pharmaciesCollectionId, // ← adapte selon ton ID de collection
+      ID.unique(),
+      {
+        ...data,
+        pharmacien: pharmacien.$id, // 🔗 champ relation Appwrite
+      }
+    );
+
+    return response;
+  } catch (error) {
+    console.error("Erreur lors de la création de la pharmacie:", error);
+    throw error;
+  }
+};
+
+export const getPharmacieByPharmacien = async (pharmacienId: string) => {
+  try {
+    const result = await databases.listDocuments(
+      config.databaseId,
+      config.pharmaciesCollectionId,
+      [Query.equal("pharmaciens", pharmacienId)]
+    );
+
+    if (result.total === 0) return null;
+    return result.documents[0]; // on suppose une seule pharmacie par pharmacien
+  } catch (err) {
+    console.error("Erreur récupération pharmacie:", err);
+    return null;
+  }
+};
+
+export const createMedicament = async ({
+  name,
+  prix,
+}: {
+  name: string;
+  prix: number;
+}) => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("Utilisateur non connecté");
+
+    const pharmacie = await getPharmacieByPharmacien(user.$id);
+    if (!pharmacie) throw new Error("Pharmacie introuvable");
+
+    const generatedId = ID.unique();
+    console.log("ID généré :", generatedId); // 🔍 Doit être aléatoire
+
+    const medicament = await databases.createDocument(
+      config.databaseId,
+      config.medicamentsCollectionId,
+      generatedId,
+      {
+        name,
+        prix,
+        pharmacieId: pharmacie.$id,
+      }
+    );
+    return medicament;
+  } catch (err) {
+    console.error("Erreur ajout médicament :", err);
+    throw err;
+  }
+};
+
+export const getMedicamentsByPharmacie = async (pharmacieId: string) => {
+  try {
+    const result = await databases.listDocuments(
+      config.databaseId,
+      config.medicamentsCollectionId,
+      [Query.equal("pharmacieId", pharmacieId)] // champ de relation exact
+    );
+
+    return result.documents;
+  } catch (error) {
+    console.error("Erreur récupération médicaments :", error);
+    return [];
+  }
 };
