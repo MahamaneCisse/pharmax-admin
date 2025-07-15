@@ -68,6 +68,16 @@ export const getCurrentUser = async () => {
 
     if (result.total === 0) {
       console.warn("Pharmacien non trouvé dans la base de données.");
+      await createPharmacienIfNotExists();
+      console.log("Pharmacien créé car inexistant.");
+      const user = await account.get();
+
+      // 1. Rechercher dans la collection des pharmaciens
+      const result = await databases.listDocuments(
+        config.databaseId,
+        config.pharmaciensCollectionId,
+        [Query.equal("pharmaciensId", user.$id)]
+      );
       return null;
     }
 
@@ -137,7 +147,7 @@ export const createPharmacie = async (data: any) => {
       ID.unique(),
       {
         ...data,
-        pharmacien: pharmacien.$id, // 🔗 champ relation Appwrite
+        pharmaciens: pharmacien.$id, // 🔗 champ relation Appwrite
       }
     );
 
