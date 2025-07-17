@@ -40,11 +40,15 @@ export default function Home() {
           pharmacie avec notre application mobile.
         </p>
       </div>
-      <Link href={"./login"} className="cursor-pointer">
+      {/* create */}
+      <div className="bg-green-700 py-2 px-4 flex items-center justify-center gap-1 text-white rounded-lg hover:bg-green-800 transition-colors duration-300">
+        Patientez...
+      </div>
+      {/* <Link href={"./login"} className="cursor-pointer">
         <button className="bg-green-700 py-2 px-4 flex items-center justify-center gap-1 text-white rounded-lg hover:bg-green-800 transition-colors duration-300">
           Commencer <FaArrowRight />
         </button>
-      </Link>
+      </Link> */}
     </div>
   );
 }
